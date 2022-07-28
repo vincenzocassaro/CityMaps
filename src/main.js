@@ -4,14 +4,18 @@ function addAnimate(path) {
 
     var length = path.getTotalLength();
 
-    const a = document.createElement('animate');
+    path.setAttribute("stroke-dasharray", length + ' ' + length);
+    path.setAttribute("stroke-dashoffset", length);
+    path.style.animation = "strokeoffset 9500ms ease-in-out 0ms forwards";
 
-    a.setAttribute("attributeName", "stroke-dashoffset");
-    a.setAttribute("attributeType", "XML");
-    a.setAttribute("dur", "10s");
-    a.setAttribute("values", length + ";0;" + length);
+    // const a = document.createElement('animate');
 
-    path.appendChild(a);
+    // a.setAttribute("attributeName", "stroke-dashoffset");
+    // a.setAttribute("attributeType", "XML");
+    // a.setAttribute("dur", "10s");
+    // a.setAttribute("values", length + ";0;" + length);
+
+    // path.appendChild(a);
 }
 
 function simulatePathDrawing(path) {
@@ -132,8 +136,8 @@ window.addEventListener('load', (event) => {
     for (let index = 0; index < list.length; index++) {
         const element = list[index];
         if (index != 0 && index != 1 && index != 2) {
-            simulatePathDrawing(element);
-            // addAnimate(element);
+            // simulatePathDrawing(element);
+            addAnimate(element);
         }
         // simulatePathDrawing(element);
     }
@@ -156,39 +160,39 @@ window.addEventListener('load', (event) => {
 
 
     // //Find all animated elements, and save their original animation-delay:
-    // var animed = Array.from(document.querySelectorAll('*')).filter(x => x.style.animationName);
-    // animed.forEach(x => {
-    //     var css = x.style,
-    //         anim = css.animationName,
-    //         delay = css.animationDelay;
+    var animed = Array.from(document.querySelectorAll('*')).filter(x => x.style.animationName);
+    animed.forEach(x => {
+        var css = x.style,
+            anim = css.animationName,
+            delay = css.animationDelay;
 
-    //     console.log(x.id, anim, delay);
-    //     x.__originalDelay = delay.match(/\d/) ? delay : '0s';
-    // });
+        console.log(x.id, anim, delay);
+        x.__originalDelay = delay.match(/\d/) ? delay : '0s';
+    });
 
 
     // //Loop through all animated elements, and update their animation-delay.
     // //Together with "animation-play-state: paused", this freezes the animation at the specified time.
-    // function freeze(time) {
-    //     animed.forEach(x => {
-    //         x.style.animationPlayState = 'paused';
-    //         x.style.animationDelay = `calc(${x.__originalDelay} - ${time}ms)`;
-    //     });
-    // }
+    function freeze(time) {
+        animed.forEach(x => {
+            x.style.animationPlayState = 'paused';
+            x.style.animationDelay = `calc(${x.__originalDelay} - ${time}ms)`;
+        });
+    }
     var animed = Array.from(document.querySelectorAll('*')).filter(x => x.style.transition);
 
-    function myfreeze() {
-        console.log("myfreeze");
+    // function myfreeze() {
+    //     console.log("myfreeze");
 
-        animed.forEach(x => {
-            var computedStyle = window.getComputedStyle(x);
-            var strokeDashoffset = computedStyle.getPropertyValue('strokeDashoffset');
+    //     animed.forEach(x => {
+    //         var computedStyle = window.getComputedStyle(x);
+    //         var strokeDashoffset = computedStyle.getPropertyValue('strokeDashoffset');
 
-            x.style.strokeDashoffset = strokeDashoffset;
-        });
+    //         x.style.strokeDashoffset = strokeDashoffset;
+    //     });
 
 
-    }
+    // }
 
 
     function render(time, frame, callback) {
@@ -196,7 +200,7 @@ window.addEventListener('load', (event) => {
         if ((frame % 3) !== 1) { callback(); return; }
 
         console.log('rendering', frameNum, time);
-        myfreeze(time);
+        freeze(time);
         svg2canvas(svg, ctx, () => {
             //console.log('  ..requesting');
             recorder.requestFrame();
@@ -224,7 +228,7 @@ window.addEventListener('load', (event) => {
         render(animTime, frameNum, () => requestAnimationFrame(renderLoop));
     };
 
-    renderLoop();
+    // renderLoop();
 
     //const freezer = document.querySelector('#freezer');
     //freezer.oninput = (e) => freeze(freezer.value * 1000);
