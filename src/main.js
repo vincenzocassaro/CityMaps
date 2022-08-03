@@ -1,47 +1,47 @@
 console.log("ciao")
 
-function addAnimate(path) {
+// function addAnimate(path) {
 
-    var length = path.getTotalLength();
+//     var length = path.getTotalLength();
 
-    path.setAttribute("stroke-dasharray", length + ' ' + length);
-    path.setAttribute("stroke-dashoffset", length);
-    path.style.animation = "strokeoffset 9500ms ease-in-out 0ms forwards";
+//     path.setAttribute("stroke-dasharray", length + ' ' + length);
+//     path.setAttribute("stroke-dashoffset", length);
+//     path.style.animation = "strokeoffset 9500ms ease-in-out 0ms forwards";
 
-    // const a = document.createElement('animate');
+//     // const a = document.createElement('animate');
 
-    // a.setAttribute("attributeName", "stroke-dashoffset");
-    // a.setAttribute("attributeType", "XML");
-    // a.setAttribute("dur", "10s");
-    // a.setAttribute("values", length + ";0;" + length);
+//     // a.setAttribute("attributeName", "stroke-dashoffset");
+//     // a.setAttribute("attributeType", "XML");
+//     // a.setAttribute("dur", "10s");
+//     // a.setAttribute("values", length + ";0;" + length);
 
-    // path.appendChild(a);
-}
+//     // path.appendChild(a);
+// }
 
-function simulatePathDrawing(path) {
-    // var path = document.querySelector('.squiggle-animated path');
-    var length = path.getTotalLength();
-    // Clear any previous transition
-    path.style.transition = path.style.WebkitTransition = 'none';
-    // Set up the starting positions
-    path.style.strokeDasharray = length + ' ' + length;
-    path.style.strokeDashoffset = length;
+// function simulatePathDrawing(path) {
+//     // var path = document.querySelector('.squiggle-animated path');
+//     var length = path.getTotalLength();
+//     // Clear any previous transition
+//     path.style.transition = path.style.WebkitTransition = 'none';
+//     // Set up the starting positions
+//     path.style.strokeDasharray = length + ' ' + length;
+//     path.style.strokeDashoffset = length;
 
-    // Trigger a layout so styles are calculated & the browser
-    // picks up the starting position before animating
-    path.getBoundingClientRect();
-    // Define our transition
-    path.style.transition = path.style.WebkitTransition = 'stroke-dashoffset 9.5s ease-in-out';
-    // Go!
-    //path.style.transitionProperty = 'stroke-dashoffset';
-    //path.style.transitionDuration = '9.5s';
-    //path.style.transitionTimingFunction = "ease-in-out";
-    //path.style.transitionDelay = '0';
+//     // Trigger a layout so styles are calculated & the browser
+//     // picks up the starting position before animating
+//     path.getBoundingClientRect();
+//     // Define our transition
+//     path.style.transition = path.style.WebkitTransition = 'stroke-dashoffset 9.5s ease-in-out';
+//     // Go!
+//     //path.style.transitionProperty = 'stroke-dashoffset';
+//     //path.style.transitionDuration = '9.5s';
+//     //path.style.transitionTimingFunction = "ease-in-out";
+//     //path.style.transitionDelay = '0';
 
-    path.style.strokeDashoffset = '0';
-    path.style.strokeWidth = '1px';
-    path.style.fill = 'rgba(255,255,0,.12)';
-}
+//     path.style.strokeDashoffset = '0';
+//     path.style.strokeWidth = '1px';
+//     path.style.fill = 'rgba(255,255,0,.12)';
+// }
 
 
 
@@ -127,20 +127,20 @@ function downloadURI(uri, name) {
 window.addEventListener('load', (event) => {
     console.log('page is fully loaded');
 
-    var list = $('.squiggle-animated path')
+    // var list = $('.squiggle-animated path')
 
     const svg = document.querySelector('#Content-R'),
         canv = document.querySelector('#rendered'),
         ctx = canv.getContext('2d');
 
-    for (let index = 0; index < list.length; index++) {
-        const element = list[index];
-        if (index != 0 && index != 1 && index != 2) {
-            // simulatePathDrawing(element);
-            addAnimate(element);
-        }
-        // simulatePathDrawing(element);
-    }
+    // for (let index = 0; index < list.length; index++) {
+    //     const element = list[index];
+    //     if (index != 0 && index != 1 && index != 2) {
+    //         // simulatePathDrawing(element);
+    //         addAnimate(element);
+    //     }
+    //     // simulatePathDrawing(element);
+    // }
 
 
     //Prepare a canvas on which to render the frames for our video
@@ -228,7 +228,7 @@ window.addEventListener('load', (event) => {
         render(animTime, frameNum, () => requestAnimationFrame(renderLoop));
     };
 
-    // renderLoop();
+    renderLoop();
 
     //const freezer = document.querySelector('#freezer');
     //freezer.oninput = (e) => freeze(freezer.value * 1000);
