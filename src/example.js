@@ -120,7 +120,7 @@ class CanvasRecorder {
 
     function render(time, frame, callback) {
         //20fps is more than enough..
-        if ((frame % 3) !== 1) { callback(); return; }
+        if ((frame % 1) !== 1) { callback(); return; }
 
         //console.log('rendering', frameNum, time);
         freeze(time);

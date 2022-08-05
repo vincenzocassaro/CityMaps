@@ -153,56 +153,26 @@
             }
         }
 
-        @keyframes strokefade {
-
-            0%,
-            95.65217391304348% {
-                stroke-opacity: 1
+        @keyframes a2 {
+            from {
+                stroke-dashoffset: 0;
             }
 
             to {
-                stroke-opacity: 0
+                stroke-dashoffset: 0;
+                fill: #ffc857;
             }
         }
 
-        @keyframes strokefade2 {
-
-            0%,
-            94.44444444444444% {
-                stroke-opacity: 1
-            }
-
-            to {
-                stroke-opacity: 0
-            }
-        }
-
-        @keyframes fadeIn {
-            0% {
-                opacity: 0;
-            }
-
-            80% {
-                opacity: 0;
-            }
-
-            100% {
-                opacity: 1;
-            }
-        }
-
-        @keyframes fadeOut {
-            0% {
-                opacity: 1;
-            }
-
-            80% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0;
-            }
+        #axes_1 path {
+            animation-name: strokeoffset, a2;
+            animation-duration: 2000ms, 1000ms;
+            animation-timing-function: ease-in-out, ease-in-out;
+            animation-iteration-count: 1, 1;
+            animation-delay: 0ms, 2000ms;
+            animation-direction: normal;
+            animation-fill-mode: forwards;
+            animation-play-state: running;
         }
     </style>
 </svg>

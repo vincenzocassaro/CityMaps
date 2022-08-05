@@ -1,0 +1,26 @@
+@keyframes strokeoffset {
+    to {
+        stroke-dashoffset: 0
+    }
+}
+
+@keyframes a2 {
+    from {
+        stroke-dashoffset: 0;
+    }
+
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+#axes_1 g:nth-child(n+3) path {
+    animation-name: strokeoffset;
+    animation-duration: 7000ms;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: 1;
+    animation-delay: 3000ms;
+    animation-direction: normal;
+    animation-fill-mode: forwards;
+    animation-play-state: running;
+}
