@@ -149,12 +149,14 @@ window.addEventListener('load', (event) => {
     const recorder = new CanvasRecorder({
         canvas: canv,
         callback: url => {
-            // downloadURI(url, "helloWorld.mov");
+
 
             const video = document.body.appendChild(document.createElement('video'));
             video.src = url;
             video.controls = true;
             video.autoplay = true;
+
+            downloadURI(url, "helloWorld.mov");
         },
     });
 
@@ -197,7 +199,7 @@ window.addEventListener('load', (event) => {
 
     function render(time, frame, callback) {
         //20fps is more than enough..
-        if ((frame % 3) !== 1) { callback(); return; }
+        // if ((frame % 3) !== 1) { callback(); return; }
 
         console.log('rendering', frameNum, time);
         freeze(time);

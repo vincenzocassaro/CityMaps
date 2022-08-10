@@ -1,4 +1,3 @@
-"use strict";
 
 
 /* Utils */
@@ -69,6 +68,15 @@ class CanvasRecorder {
     }
 }
 
+function downloadURI(uri, name) {
+    var link = document.createElement("a");
+    link.download = name;
+    link.href = uri;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    delete link;
+}
 
 
 (function () {
@@ -92,6 +100,8 @@ class CanvasRecorder {
             video.src = url;
             video.controls = true;
             video.autoplay = true;
+
+            downloadURI(url, "helloWorld.mp4");
         },
     });
 
@@ -120,7 +130,7 @@ class CanvasRecorder {
 
     function render(time, frame, callback) {
         //20fps is more than enough..
-        if ((frame % 1) !== 1) { callback(); return; }
+        // if ((frame % 1) !== 1) { callback(); return; }
 
         //console.log('rendering', frameNum, time);
         freeze(time);
