@@ -121,7 +121,7 @@ window.addEventListener('load', (event) => {
             video.controls = true;
             video.autoplay = true;
 
-            downloadURI(url, "helloWorld.mp4");
+            downloadURI(url, "helloWorld.webm");
         },
     });
 

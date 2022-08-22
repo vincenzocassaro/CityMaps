@@ -25,7 +25,8 @@ def concatenate(video_clip_paths, output_path, method="compose"):
     final_clip.write_videofile(output_path)
 
 def main():
-    concatenate(["primo.mp4", "video.mp4"], "outputfinale.mp4")
+    name = "palmanova"
+    concatenate([f"videos/first/{name}.mp4", f"videos/second/{name}.mp4"], f"videos/final/{name}.mp4")
 
 
 if __name__ == "__main__":
