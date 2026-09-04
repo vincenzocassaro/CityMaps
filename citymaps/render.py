@@ -167,6 +167,7 @@ def _write_animation_page(
         {
             "animationDurationMs": round(request.animation_seconds * 1000),
             "drawDelayMs": min(1000, round(request.animation_seconds * 100)),
+            "finalFrameHoldMs": 500,
         }
     )
     html = f"""<!doctype html>

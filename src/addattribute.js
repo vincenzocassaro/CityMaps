@@ -1,6 +1,7 @@
 const config = window.CITYMAPS_CONFIG || {};
 const animationDuration = config.animationDurationMs || 15000;
 const drawDelay = config.drawDelayMs || 1000;
+const finalFrameHold = config.finalFrameHoldMs || 500;
 
 function easeInOut(progress) {
     return progress < 0.5
@@ -54,6 +55,7 @@ function drawFrame(paths, time) {
 window.addEventListener("load", () => {
     const paths = preparePaths(document.querySelector("svg"));
     let startTime;
+    let finishScheduled = false;
 
     function render(timestamp) {
         if (!startTime) {
@@ -64,7 +66,12 @@ window.addEventListener("load", () => {
         drawFrame(paths, elapsed);
 
         if (elapsed === animationDuration) {
-            document.body.dataset.renderState = "complete";
+            if (!finishScheduled) {
+                finishScheduled = true;
+                setTimeout(() => {
+                    document.body.dataset.renderState = "complete";
+                }, finalFrameHold);
+            }
             return;
         }
 
