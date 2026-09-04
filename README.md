@@ -32,17 +32,18 @@ and SVG downloads.
 
 Generated files are also written to the ignored `output` directory.
 
-## Post Bridge drafts
+## Free TikTok drafts
 
-After rendering a video, expand **Send to TikTok with Post Bridge**. Enter a
-Post Bridge API key, load the connected TikTok accounts, and create a private
-draft. CityMaps uploads the MP4 directly to Post Bridge; it does not store the
-API key in the repository or publish the draft automatically.
+After rendering a video, expand **Send to TikTok for free**. CityMaps uploads
+the MP4 to Cloudinary, then creates a private TikTok draft through Buffer. The
+draft cannot publish until it is explicitly scheduled in Buffer.
 
-For local development, the key can also be supplied when starting the studio:
+Create free Buffer and Cloudinary accounts, connect TikTok to Buffer, and copy
+the Buffer API key and Cloudinary URL into the studio. Neither secret is stored
+in the repository. They can also be supplied when starting the studio:
 
 ```sh
-POST_BRIDGE_API_KEY=your-key ./scripts/run.sh
+BUFFER_API_KEY=your-key CLOUDINARY_URL=cloudinary://key:secret@cloud ./scripts/run.sh
 ```
 
 ## Run from the command line

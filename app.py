@@ -5,8 +5,9 @@ import streamlit as st
 
 import prettymaps
 from citymaps import (
-    PostBridgeClient,
-    PostBridgeError,
+    BufferClient,
+    CloudinaryClient,
+    PublishingError,
     RenderError,
     RenderRequest,
     render_city_map,
@@ -213,52 +214,64 @@ with preview:
                     width="stretch",
                 )
 
-        with st.expander("Send to TikTok with Post Bridge"):
+        with st.expander("Send to TikTok for free"):
             st.caption(
-                "The first integration creates a private Post Bridge draft. "
-                "It cannot publish to TikTok without a separate confirmation."
+                "Cloudinary hosts the video and Buffer creates a private draft. "
+                "Nothing is published until you schedule it in Buffer."
             )
-            st.link_button(
-                "Create or open Post Bridge",
-                "https://www.post-bridge.com/create-account",
-                width="stretch",
-            )
-            api_key = st.text_input(
-                "Post Bridge API key",
-                value=os.environ.get("POST_BRIDGE_API_KEY", ""),
+            account_links = st.columns(2)
+            with account_links[0]:
+                st.link_button(
+                    "Open Buffer",
+                    "https://publish.buffer.com/settings/api",
+                    width="stretch",
+                )
+            with account_links[1]:
+                st.link_button(
+                    "Open Cloudinary",
+                    "https://console.cloudinary.com/",
+                    width="stretch",
+                )
+            buffer_api_key = st.text_input(
+                "Buffer API key",
+                value=os.environ.get("BUFFER_API_KEY", ""),
                 type="password",
                 help="Stored only in this Streamlit session unless supplied as an environment variable.",
-                key="post_bridge_api_key",
+                key="buffer_api_key",
+            )
+            cloudinary_url = st.text_input(
+                "Cloudinary URL",
+                value=os.environ.get("CLOUDINARY_URL", ""),
+                type="password",
+                placeholder="cloudinary://API_KEY:API_SECRET@CLOUD_NAME",
+                help="Copy CLOUDINARY_URL from the Cloudinary API Keys page.",
+                key="cloudinary_url",
             )
 
             if st.button("Load TikTok accounts", width="stretch"):
                 try:
-                    accounts = PostBridgeClient(api_key).list_accounts("tiktok")
-                    st.session_state["post_bridge_tiktok_accounts"] = [
+                    channels = BufferClient(buffer_api_key).list_channels("tiktok")
+                    st.session_state["buffer_tiktok_channels"] = [
                         {
-                            "id": account.id,
-                            "username": account.username,
-                            "needs_reconnect": account.needs_reconnect,
+                            "id": channel.id,
+                            "name": channel.name,
                         }
-                        for account in accounts
+                        for channel in channels
                     ]
-                    if not accounts:
-                        st.warning("Connect a TikTok account in Post Bridge, then try again.")
-                except (PostBridgeError, ValueError) as error:
+                    if not channels:
+                        st.warning("Connect a TikTok channel in Buffer, then try again.")
+                except (PublishingError, ValueError) as error:
                     st.error(str(error))
 
-            accounts = st.session_state.get("post_bridge_tiktok_accounts", [])
-            available_accounts = [
-                account for account in accounts if not account["needs_reconnect"]
-            ]
-            if available_accounts:
-                account_labels = {
-                    f"@{account['username']}": account["id"]
-                    for account in available_accounts
+            channels = st.session_state.get("buffer_tiktok_channels", [])
+            if channels:
+                channel_labels = {
+                    channel["name"]: channel["id"]
+                    for channel in channels
                 }
-                selected_account = st.selectbox(
+                selected_channel = st.selectbox(
                     "TikTok account",
-                    account_labels,
+                    channel_labels,
                 )
                 caption = st.text_area(
                     "Caption",
@@ -269,18 +282,29 @@ with preview:
                     height=100,
                 )
                 if st.button(
-                    "Create private Post Bridge draft",
+                    "Create private Buffer draft",
                     type="primary",
                     width="stretch",
                 ):
                     try:
-                        post = PostBridgeClient(api_key).create_video_draft(
-                            OUTPUT_DIR / f"{artifact['name']}.mp4",
-                            caption,
-                            account_labels[selected_account],
-                        )
-                        st.success(f"Draft created in Post Bridge: {post.id}")
-                    except (PostBridgeError, ValueError) as error:
+                        with st.status("Preparing TikTok draft", expanded=True) as status:
+                            status.write("Uploading the video to Cloudinary")
+                            video_url = CloudinaryClient.from_url(cloudinary_url).upload_video(
+                                artifact["video"], artifact["name"]
+                            )
+                            status.write("Creating the private draft in Buffer")
+                            post = BufferClient(buffer_api_key).create_video_draft(
+                                video_url,
+                                caption,
+                                channel_labels[selected_channel],
+                            )
+                            status.update(
+                                label="TikTok draft ready in Buffer",
+                                state="complete",
+                                expanded=False,
+                            )
+                        st.success(f"Private Buffer draft created: {post.id}")
+                    except (PublishingError, ValueError) as error:
                         st.error(str(error))
     else:
         st.markdown(

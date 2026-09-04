@@ -1,20 +1,22 @@
 """Public CityMaps rendering interface."""
 
-from .postbridge import (
-    PostBridgeClient,
-    PostBridgeError,
-    PostBridgePost,
-    SocialAccount,
+from .publishing import (
+    BufferChannel,
+    BufferClient,
+    BufferPost,
+    CloudinaryClient,
+    PublishingError,
 )
 from .render import RenderError, RenderRequest, RenderResult, render_city_map
 
 __all__ = [
-    "PostBridgeClient",
-    "PostBridgeError",
-    "PostBridgePost",
+    "BufferChannel",
+    "BufferClient",
+    "BufferPost",
+    "CloudinaryClient",
+    "PublishingError",
     "RenderError",
     "RenderRequest",
     "RenderResult",
-    "SocialAccount",
     "render_city_map",
 ]
