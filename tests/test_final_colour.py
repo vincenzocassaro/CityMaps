@@ -43,27 +43,43 @@ def test_line_drawing_is_visible_during_the_first_second(tmp_path):
         output_height=160,
     )
     _write_animation_page(svg_path, html_path, request)
+    assert "visibility: hidden" in html_path.read_text(encoding="utf-8")
 
     with sync_playwright() as playwright:
         browser = launch_chrome(playwright)
         try:
             page = browser.new_page()
             page.goto(html_path.as_uri(), wait_until="load")
-            page.wait_for_timeout(1000)
+            page.wait_for_timeout(100)
+            first_frame_fractions = page.evaluate(
+                """() => {
+                    const paths = document.querySelectorAll('path');
+                    return [3, 4].map(index => {
+                        const path = paths[index];
+                        return 1 - Number.parseFloat(getComputedStyle(path).strokeDashoffset) / path.getTotalLength();
+                    });
+                }"""
+            )
+            page.wait_for_timeout(900)
             drawn_fractions = page.evaluate(
                 """() => {
                     const paths = document.querySelectorAll('path');
                     return [3, 4].map(index => {
                         const path = paths[index];
-                        return 1 - Number.parseFloat(path.style.strokeDashoffset) / path.getTotalLength();
+                        return 1 - Number.parseFloat(getComputedStyle(path).strokeDashoffset) / path.getTotalLength();
                     });
                 }"""
+            )
+            visibility = page.locator("svg").evaluate(
+                "svg => getComputedStyle(svg).visibility"
             )
         finally:
             browser.close()
 
+    assert max(first_frame_fractions) < 0.01
     assert drawn_fractions[0] > 0.25
     assert drawn_fractions[1] < 0.05
+    assert visibility == "visible"
 
 
 def test_recording_reports_svg_loading_time(tmp_path):

@@ -173,7 +173,7 @@ def _write_animation_page(
     configuration = json.dumps(
         {
             "animationDurationMs": round(request.animation_seconds * 1000),
-            "drawDelayMs": 0,
+            "drawDelayMs": min(500, round(request.animation_seconds * 200)),
             "finalFrameHoldMs": 500,
         }
     )
@@ -184,7 +184,10 @@ def _write_animation_page(
   <title>Rendering {request.output_name}</title>
   <style>
     html, body {{ width: 100%; height: 100%; margin: 0; overflow: hidden; background: white; }}
-    svg {{ display: block; width: 100vw; height: 100vh; }}
+    svg {{ display: block; width: 100vw; height: 100vh; visibility: hidden; }}
+    .citymaps-animated-path {{ animation-play-state: paused !important; }}
+    svg.citymaps-drawing .citymaps-animated-path {{ animation-play-state: running !important; }}
+    @keyframes citymaps-draw {{ to {{ stroke-dashoffset: 0; }} }}
   </style>
 </head>
 <body data-render-state="running">

@@ -3,10 +3,8 @@ const animationDuration = config.animationDurationMs || 15000;
 const drawDelay = config.drawDelayMs ?? 0;
 const finalFrameHold = config.finalFrameHoldMs || 500;
 const staggerSpan = 0.7;
-
-function easeOut(progress) {
-    return 1 - (1 - progress) * (1 - progress);
-}
+const drawingWindow = animationDuration - drawDelay;
+const pathDuration = drawingWindow * (1 - staggerSpan);
 
 function preparePaths(svg) {
     const paths = Array.from(svg.querySelectorAll("path"));
@@ -29,57 +27,42 @@ function preparePaths(svg) {
         path.style.strokeDashoffset = `${length}`;
 
         const stagger = ((index * 0.61803398875) % 1) * staggerSpan;
-        return { path, length, original, stagger };
+        path.classList.add("citymaps-animated-path");
+        path.style.animationName = "citymaps-draw";
+        path.style.animationDuration = `${pathDuration}ms`;
+        path.style.animationDelay = `${drawDelay + stagger * drawingWindow}ms`;
+        path.style.animationTimingFunction = "cubic-bezier(0, 0, 0.58, 1)";
+        path.style.animationFillMode = "forwards";
+
+        return { path, original };
     });
 }
 
-function drawFrame(paths, time) {
-    const progress = Math.min(
-        1,
-        Math.max(0, (time - drawDelay) / (animationDuration - drawDelay)),
-    );
-    for (const { path, length, original, stagger } of paths) {
-        const pathProgress = Math.min(
-            1,
-            Math.max(0, (progress - stagger) / (1 - staggerSpan)),
-        );
-        const offsetScale = 1 - easeOut(pathProgress);
-        path.style.strokeDashoffset = `${length * offsetScale}`;
-
-        if (progress === 1) {
-            path.style.fill = original.fill;
-            path.style.stroke = original.stroke;
-            path.style.strokeWidth = original.strokeWidth;
-            path.style.strokeDasharray = "none";
-        }
+function restoreFinalStyle(paths) {
+    for (const { path, original } of paths) {
+        path.style.animation = "none";
+        path.style.fill = original.fill;
+        path.style.stroke = original.stroke;
+        path.style.strokeWidth = original.strokeWidth;
+        path.style.strokeDasharray = "none";
+        path.style.strokeDashoffset = "0";
     }
 }
 
 window.addEventListener("load", () => {
-    const paths = preparePaths(document.querySelector("svg"));
-    let startTime;
-    let finishScheduled = false;
+    const svg = document.querySelector("svg");
+    const paths = preparePaths(svg);
+    svg.style.visibility = "visible";
 
-    function render(timestamp) {
-        if (!startTime) {
-            startTime = timestamp;
-        }
-
-        const elapsed = Math.min(timestamp - startTime, animationDuration);
-        drawFrame(paths, elapsed);
-
-        if (elapsed === animationDuration) {
-            if (!finishScheduled) {
-                finishScheduled = true;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            svg.classList.add("citymaps-drawing");
+            setTimeout(() => {
+                restoreFinalStyle(paths);
                 setTimeout(() => {
                     document.body.dataset.renderState = "complete";
                 }, finalFrameHold);
-            }
-            return;
-        }
-
-        requestAnimationFrame(render);
-    }
-
-    requestAnimationFrame(render);
+            }, animationDuration);
+        });
+    });
 });
