@@ -1,9 +1,16 @@
+import os
 from pathlib import Path
 
 import streamlit as st
 
 import prettymaps
-from citymaps import RenderError, RenderRequest, render_city_map
+from citymaps import (
+    PostBridgeClient,
+    PostBridgeError,
+    RenderError,
+    RenderRequest,
+    render_city_map,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -205,6 +212,76 @@ with preview:
                     mime="image/svg+xml",
                     width="stretch",
                 )
+
+        with st.expander("Send to TikTok with Post Bridge"):
+            st.caption(
+                "The first integration creates a private Post Bridge draft. "
+                "It cannot publish to TikTok without a separate confirmation."
+            )
+            st.link_button(
+                "Create or open Post Bridge",
+                "https://www.post-bridge.com/create-account",
+                width="stretch",
+            )
+            api_key = st.text_input(
+                "Post Bridge API key",
+                value=os.environ.get("POST_BRIDGE_API_KEY", ""),
+                type="password",
+                help="Stored only in this Streamlit session unless supplied as an environment variable.",
+                key="post_bridge_api_key",
+            )
+
+            if st.button("Load TikTok accounts", width="stretch"):
+                try:
+                    accounts = PostBridgeClient(api_key).list_accounts("tiktok")
+                    st.session_state["post_bridge_tiktok_accounts"] = [
+                        {
+                            "id": account.id,
+                            "username": account.username,
+                            "needs_reconnect": account.needs_reconnect,
+                        }
+                        for account in accounts
+                    ]
+                    if not accounts:
+                        st.warning("Connect a TikTok account in Post Bridge, then try again.")
+                except (PostBridgeError, ValueError) as error:
+                    st.error(str(error))
+
+            accounts = st.session_state.get("post_bridge_tiktok_accounts", [])
+            available_accounts = [
+                account for account in accounts if not account["needs_reconnect"]
+            ]
+            if available_accounts:
+                account_labels = {
+                    f"@{account['username']}": account["id"]
+                    for account in available_accounts
+                }
+                selected_account = st.selectbox(
+                    "TikTok account",
+                    account_labels,
+                )
+                caption = st.text_area(
+                    "Caption",
+                    value=(
+                        f"{artifact['name'].replace('-', ' ').title()} drawn one street "
+                        "at a time. #citymaps #maps"
+                    ),
+                    height=100,
+                )
+                if st.button(
+                    "Create private Post Bridge draft",
+                    type="primary",
+                    width="stretch",
+                ):
+                    try:
+                        post = PostBridgeClient(api_key).create_video_draft(
+                            OUTPUT_DIR / f"{artifact['name']}.mp4",
+                            caption,
+                            account_labels[selected_account],
+                        )
+                        st.success(f"Draft created in Post Bridge: {post.id}")
+                    except (PostBridgeError, ValueError) as error:
+                        st.error(str(error))
     else:
         st.markdown(
             '<div class="city-empty"><div><strong>Your animated map will appear here.</strong><br>Start with a location on the left.</div></div>',
