@@ -1,0 +1,3 @@
+# MoviePy 2 removed moviepy.editor, which mergevideos.py still imports.
+moviepy==1.0.3
+opencv-python-headless>=4.11

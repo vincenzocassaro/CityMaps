@@ -1,5 +1,7 @@
-# Import everything needed to edit video clips
-from moviepy.editor import *
+import argparse
+from pathlib import Path
+
+from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 
 def concatenate(video_clip_paths, output_path, method="compose"):
@@ -9,24 +11,44 @@ def concatenate(video_clip_paths, output_path, method="compose"):
         `reduce`: Reduce the quality of the video to the lowest quality on the list of `video_clip_paths`.
         `compose`: type help(concatenate_videoclips) for the info"""
     # create VideoFileClip object for each video file
-    clips = [VideoFileClip(c) for c in video_clip_paths]
-    if method == "reduce":
-        # calculate minimum width & height across all clips
-        min_height = min([c.h for c in clips])
-        min_width = min([c.w for c in clips])
-        # resize the videos to the minimum
-        clips = [c.resize(newsize=(min_width, min_height)) for c in clips]
-        # concatenate the final video
-        final_clip = concatenate_videoclips(clips)
-    elif method == "compose":
-        # concatenate the final video with the compose method provided by moviepy
-        final_clip = concatenate_videoclips(clips, method="compose")
-    # write the output video file
-    final_clip.write_videofile(output_path)
+    clips = [VideoFileClip(str(path)) for path in video_clip_paths]
+    final_clip = None
+    try:
+        if method == "reduce":
+            min_height = min(clip.h for clip in clips)
+            min_width = min(clip.w for clip in clips)
+            clips = [clip.resize(newsize=(min_width, min_height)) for clip in clips]
+            final_clip = concatenate_videoclips(clips)
+        elif method == "compose":
+            final_clip = concatenate_videoclips(clips, method="compose")
+        else:
+            raise ValueError(f"Unknown concatenation method: {method}")
 
-def main():
-    name = "palmanova"
-    concatenate([f"videos/first/{name}.mp4", f"videos/second/{name}.mp4"], f"videos/final/{name}.mp4")
+        final_clip.write_videofile(str(output_path), codec="libx264", audio=False)
+    finally:
+        if final_clip is not None:
+            final_clip.close()
+        for clip in clips:
+            clip.close()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Append the still clip to a map animation.")
+    parser.add_argument("city", help="Base name shared by the input video files")
+    args = parser.parse_args()
+
+    project_dir = Path(__file__).resolve().parent
+    video_dir = project_dir / "videos"
+    output_path = video_dir / "final" / f"{args.city}.mp4"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    concatenate(
+        [
+            video_dir / "first" / f"{args.city}.mp4",
+            video_dir / "second" / f"{args.city}.mp4",
+        ],
+        output_path,
+    )
+    print(output_path)
 
 
 if __name__ == "__main__":

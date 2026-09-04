@@ -1,29 +1,79 @@
 # CityMaps
 
-![Logo](/assets/logo.png)
+![CityMaps logo](assets/logo.png)
 
-## How To
-1. Andare su prettymaps nel file main mattere il nome della citta desiderata a riga 18 (e a 90 e 91 il nome con cui si vogliono salvare i file)
+CityMaps turns a map from [Prettymaps](https://github.com/marceloprates/prettymaps) into an animated WebM video, converts it to MP4, and appends a still frame.
 
-2. andare nel progetto citymaps (questo) e fare una copia del file template.html e rinominarlo ad esempio col nome della citta che si sta facendo
+## Setup
 
-3. aprire il file svg e copiare dal tag svg in poi
+The project uses Python 3.12 and FFmpeg. On macOS with Homebrew:
 
-4. incollare nel file nome_citta.html nel punto indicato il codice svg \
-```sed -e '/here goes svg/r./palmanova.svg' test-template.html > palmanova.html```
+```sh
+brew install python@3.12 ffmpeg
+./scripts/setup.sh
+```
 
-5. aggiungere il css con l'animazione \
-```sed -e '/\/svg>/r./pcsstouse.txt' palmanova.html > palmanova.html```
+The setup script clones Prettymaps next to this repository, creates `venv`, installs the Python packages, and creates the ignored working directories under `src`.
 
-6. aprire nel browser il file nome_citta.html
+If Prettymaps lives somewhere else, pass its path:
 
-7. alla fine dell'animazione verra chiesto dove si vuole salvare il video
+```sh
+PRETTYMAPS_DIR=/path/to/prettymaps ./scripts/setup.sh
+```
 
-8. tradurlo in mp4\
-```ffmpeg -fflags +genpts -i videos/first/macao.webm -r 24 videos/first/macao.mp4```
+## Generate the source map
 
-9. run command ```python generate.py ``` per generare un pezzo di video con l'immagine completa e colorata
+Start the Prettymaps editor:
 
-10. run command ```python mergevideos.py ``` per mergiare i due video insieme
+```sh
+./scripts/prettymaps.sh
+```
 
-11. vai su tiktok, pubblica, make profit
+Open `http://localhost:8501` in Chrome. Choose a location and download both the PNG and SVG. Keep the OpenStreetMap and Prettymaps attribution included in the generated map.
+
+## Build the animation
+
+From `src`:
+
+1. Put the downloaded PNG at `images/<city>.png` and the SVG at `<city>.svg`. Set a shell variable to that name. For example:
+
+   ```sh
+   city=palmanova
+   ```
+
+2. Copy the SVG from its opening `<svg>` tag onward into a fragment:
+
+   ```sh
+   sed -n '/<svg /,$p' "$city.svg" > "$city.fragment.svg"
+   ```
+
+3. Insert the SVG and animation CSS into the HTML template:
+
+   ```sh
+   sed \
+     -e "/here goes svg/r $city.fragment.svg" \
+     -e '/<\/svg>/r pcsstouse.txt' \
+     template.html > "$city.html"
+   ```
+
+4. Serve the directory and open the generated page in Chrome:
+
+   ```sh
+   ../venv/bin/python -m http.server 8000
+   ```
+
+   Open `http://localhost:8000/palmanova.html`, replacing `palmanova` with your city. Chrome downloads the animation as `<city>.webm` after 15 seconds.
+
+5. Move the recording to `videos/first/<city>.webm`, then convert and finish the video:
+
+   ```sh
+   ffmpeg -fflags +genpts \
+     -i "videos/first/$city.webm" \
+     -vf "scale=992:1380:force_original_aspect_ratio=decrease,pad=992:1380:(ow-iw)/2:(oh-ih)/2" \
+     -r 24 -c:v libx264 -pix_fmt yuv420p \
+     "videos/first/$city.mp4"
+   ../venv/bin/python generate.py "$city"
+   ../venv/bin/python mergevideos.py "$city"
+   ```
+
+The final file is written to `src/videos/final/<city>.mp4`.
