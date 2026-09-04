@@ -1,3 +1,2 @@
-# MoviePy 2 removed moviepy.editor, which mergevideos.py still imports.
-moviepy==1.0.3
-opencv-python-headless>=4.11
+prettymaps @ https://github.com/marceloprates/prettymaps/archive/02f85870ced807b7d24ce1764764ff877f9edffd.zip
+playwright>=1.50,<2

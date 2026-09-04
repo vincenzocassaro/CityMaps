@@ -3,8 +3,6 @@
 set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-projects_root="$(dirname "$project_root")"
-prettymaps_dir="${PRETTYMAPS_DIR:-$projects_root/prettymaps}"
 python_command="${PYTHON_COMMAND:-python3.12}"
 
 if ! command -v "$python_command" >/dev/null 2>&1; then
@@ -17,29 +15,22 @@ if ! command -v ffmpeg >/dev/null 2>&1; then
     exit 1
 fi
 
-if [[ ! -d "$prettymaps_dir/.git" ]]; then
-    mkdir -p "$(dirname "$prettymaps_dir")"
-    git clone https://github.com/marceloprates/prettymaps.git "$prettymaps_dir"
+if ! command -v google-chrome >/dev/null 2>&1 \
+    && ! command -v google-chrome-stable >/dev/null 2>&1 \
+    && [[ ! -x "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ]]; then
+    echo "Google Chrome is required to record the map animation." >&2
+    exit 1
 fi
 
 "$python_command" -m venv --clear "$project_root/venv"
 "$project_root/venv/bin/python" -m pip install --upgrade pip setuptools wheel
-"$project_root/venv/bin/python" -m pip install \
-    -r "$project_root/requirements.txt" \
-    -e "$prettymaps_dir"
+"$project_root/venv/bin/python" -m pip install -r "$project_root/requirements.txt"
 
-printf '%s\n' "$prettymaps_dir" > "$project_root/venv/.prettymaps-dir"
-
-mkdir -p \
-    "$project_root/src/images" \
-    "$project_root/src/videos/first" \
-    "$project_root/src/videos/second" \
-    "$project_root/src/videos/final"
+mkdir -p "$project_root/output"
 
 "$project_root/venv/bin/python" -m pip check
 
 echo
 echo "CityMaps is ready."
-echo "Prettymaps: $prettymaps_dir"
 echo "Environment: $project_root/venv"
-echo "Run the map editor with: PRETTYMAPS_DIR=\"$prettymaps_dir\" ./scripts/prettymaps.sh"
+echo "Run the studio with: ./scripts/run.sh"
