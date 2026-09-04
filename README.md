@@ -46,6 +46,10 @@ in the repository. They can also be supplied when starting the studio:
 BUFFER_API_KEY=your-key CLOUDINARY_URL=cloudinary://key:secret@cloud ./scripts/run.sh
 ```
 
+On macOS, `scripts/run.sh` also reads credentials stored in Keychain under
+`CityMaps Buffer API Key` and `CityMaps Cloudinary URL`. Environment variables
+take precedence when present.
+
 ## Run from the command line
 
 The command line calls the same renderer as the studio:
