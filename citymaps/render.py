@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -99,10 +100,16 @@ def render_city_map(
         webm_path = temporary_path / f"{name}.webm"
         html_path = temporary_path / f"{name}.html"
         _write_animation_page(svg_path, html_path, request)
-        _record_animation(html_path, webm_path, request)
+        animation_start = _record_animation(html_path, webm_path, request)
 
         _notify(on_stage, "Encoding the final MP4")
-        _encode_final_video(webm_path, png_path, video_path, request)
+        _encode_final_video(
+            webm_path,
+            png_path,
+            video_path,
+            request,
+            animation_start=animation_start,
+        )
 
     return RenderResult(name, png_path, svg_path, video_path)
 
@@ -166,7 +173,7 @@ def _write_animation_page(
     configuration = json.dumps(
         {
             "animationDurationMs": round(request.animation_seconds * 1000),
-            "drawDelayMs": min(1000, round(request.animation_seconds * 100)),
+            "drawDelayMs": 0,
             "finalFrameHoldMs": 500,
         }
     )
@@ -194,7 +201,7 @@ def _record_animation(
     html_path: Path,
     webm_path: Path,
     request: RenderRequest,
-) -> None:
+) -> float:
     timeout_ms = round((request.animation_seconds + 30) * 1000)
 
     try:
@@ -216,9 +223,14 @@ def _record_animation(
                         "height": request.output_height,
                     },
                 )
+                recording_started = time.monotonic()
                 page = context.new_page()
                 recording = page.video
                 page.goto(html_path.as_uri(), wait_until="load")
+                animation_start = max(
+                    0,
+                    time.monotonic() - recording_started - 0.15,
+                )
                 page.wait_for_function(
                     "document.body.dataset.renderState === 'complete'",
                     timeout=timeout_ms,
@@ -239,15 +251,28 @@ def _record_animation(
     if not webm_path.exists() or webm_path.stat().st_size == 0:
         raise RenderError("Chrome finished without producing an animation.")
 
+    return animation_start
+
 
 def _encode_final_video(
     webm_path: Path,
     png_path: Path,
     video_path: Path,
     request: RenderRequest,
+    animation_start: float = 0,
 ) -> None:
     if shutil.which("ffmpeg") is None:
         raise RenderError("FFmpeg is required. Install it with: brew install ffmpeg")
+    if shutil.which("ffprobe") is None:
+        raise RenderError("FFprobe is required and is normally installed with FFmpeg.")
+
+    recorded_duration = _video_duration(webm_path)
+    captured_animation = max(
+        recorded_duration - animation_start,
+        1 / request.fps,
+    )
+    requested_animation = request.animation_seconds + 0.5
+    timing_factor = requested_animation / captured_animation
 
     size_filter = (
         f"scale={request.output_width}:{request.output_height}:"
@@ -255,7 +280,11 @@ def _encode_final_video(
         f"pad={request.output_width}:{request.output_height}:"
         "(ow-iw)/2:(oh-ih)/2:color=white,setsar=1"
     )
-    animation_filter = f"[0:v]fps={request.fps},{size_filter},setpts=PTS-STARTPTS[animation]"
+    animation_filter = (
+        f"[0:v]trim=start={animation_start:.3f},"
+        f"setpts={timing_factor:.6f}*(PTS-STARTPTS),"
+        f"fps={request.fps},{size_filter}[animation]"
+    )
     command = [
         "ffmpeg",
         "-y",
@@ -306,6 +335,27 @@ def _encode_final_video(
     if process.returncode != 0:
         details = "\n".join(process.stderr.splitlines()[-12:])
         raise RenderError(f"FFmpeg could not create the final video.\n{details}")
+
+
+def _video_duration(video_path: Path) -> float:
+    process = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            str(video_path),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    try:
+        return float(process.stdout.strip())
+    except ValueError as error:
+        raise RenderError("FFprobe could not read the animation duration.") from error
 
 
 def _notify(callback: StageCallback | None, message: str) -> None:

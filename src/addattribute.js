@@ -1,18 +1,17 @@
 const config = window.CITYMAPS_CONFIG || {};
 const animationDuration = config.animationDurationMs || 15000;
-const drawDelay = config.drawDelayMs || 1000;
+const drawDelay = config.drawDelayMs ?? 0;
 const finalFrameHold = config.finalFrameHoldMs || 500;
+const staggerSpan = 0.7;
 
-function easeInOut(progress) {
-    return progress < 0.5
-        ? 4 * progress * progress * progress
-        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+function easeOut(progress) {
+    return 1 - (1 - progress) * (1 - progress);
 }
 
 function preparePaths(svg) {
     const paths = Array.from(svg.querySelectorAll("path"));
 
-    return paths.slice(3, -2).map(path => {
+    return paths.slice(3, -2).map((path, index) => {
         const computed = getComputedStyle(path);
         const length = path.getTotalLength();
         const original = {
@@ -29,7 +28,8 @@ function preparePaths(svg) {
         path.style.strokeDasharray = `${length} ${length}`;
         path.style.strokeDashoffset = `${length}`;
 
-        return { path, length, original };
+        const stagger = ((index * 0.61803398875) % 1) * staggerSpan;
+        return { path, length, original, stagger };
     });
 }
 
@@ -38,9 +38,12 @@ function drawFrame(paths, time) {
         1,
         Math.max(0, (time - drawDelay) / (animationDuration - drawDelay)),
     );
-    const offsetScale = 1 - easeInOut(progress);
-
-    for (const { path, length, original } of paths) {
+    for (const { path, length, original, stagger } of paths) {
+        const pathProgress = Math.min(
+            1,
+            Math.max(0, (progress - stagger) / (1 - staggerSpan)),
+        );
+        const offsetScale = 1 - easeOut(pathProgress);
         path.style.strokeDashoffset = `${length * offsetScale}`;
 
         if (progress === 1) {

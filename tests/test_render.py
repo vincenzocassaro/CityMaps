@@ -63,10 +63,12 @@ def test_render_city_map_owns_the_complete_pipeline(tmp_path, monkeypatch):
         assert html_path.exists()
         assert request.animation_seconds == 15
         webm_path.write_bytes(b"webm")
+        return 1.25
 
-    def fake_encode(webm_path, png_path, video_path, request):
+    def fake_encode(webm_path, png_path, video_path, request, animation_start):
         assert webm_path.read_bytes() == b"webm"
         assert png_path.read_bytes() == b"png"
+        assert animation_start == 1.25
         video_path.write_bytes(b"mp4")
 
     monkeypatch.setattr(render_module, "_render_map", fake_map)
